@@ -1,0 +1,503 @@
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
+import {
+  LayoutDashboard, FileText, Image, Users, Heart, Mail, Calendar, Settings, LogOut, Menu, X, Bell, ChevronDown, Plus, Eye, Edit, Trash2, Search, Filter, MoreVertical, TrendingUp, DollarSign, UserPlus, Activity
+} from 'lucide-react';
+import { Button } from '../../components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
+import { Input } from '../../components/ui/input';
+import { ngoInfo, impactStats, programs, newsArticles, donationTiers, successStories, volunteerOpportunities } from '../../data/mock';
+import { toast } from 'sonner';
+
+const AdminDashboard = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [activeTab, setActiveTab] = useState('overview');
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    const token = localStorage.getItem('admin_token');
+    const userData = localStorage.getItem('admin_user');
+    
+    if (!token) {
+      navigate('/admin/login');
+      return;
+    }
+    
+    if (userData) {
+      setUser(JSON.parse(userData));
+    }
+  }, [navigate]);
+
+  const handleLogout = () => {
+    localStorage.removeItem('admin_token');
+    localStorage.removeItem('admin_user');
+    toast.success('Logged out successfully');
+    navigate('/admin/login');
+  };
+
+  const sidebarItems = [
+    { id: 'overview', label: 'Dashboard', icon: LayoutDashboard },
+    { id: 'programs', label: 'Programs', icon: FileText },
+    { id: 'donations', label: 'Donations', icon: Heart },
+    { id: 'volunteers', label: 'Volunteers', icon: Users },
+    { id: 'stories', label: 'Impact Stories', icon: Activity },
+    { id: 'news', label: 'News & Blog', icon: Calendar },
+    { id: 'gallery', label: 'Gallery', icon: Image },
+    { id: 'inquiries', label: 'Inquiries', icon: Mail },
+    { id: 'settings', label: 'Settings', icon: Settings },
+  ];
+
+  // Mock data for dashboard
+  const dashboardStats = [
+    { label: 'Total Donations', value: '₹12.5L', change: '+12%', icon: DollarSign, color: 'bg-terracotta-500' },
+    { label: 'Active Volunteers', value: '156', change: '+8%', icon: Users, color: 'bg-sage-500' },
+    { label: 'New Inquiries', value: '24', change: '+15%', icon: Mail, color: 'bg-ochre-500' },
+    { label: 'Programs Running', value: '12', change: '+2', icon: Activity, color: 'bg-stone-600' },
+  ];
+
+  const recentDonations = [
+    { id: 1, name: 'Rajesh Kumar', amount: 5000, date: '2025-08-04', status: 'completed' },
+    { id: 2, name: 'Priya Sharma', amount: 2500, date: '2025-08-03', status: 'completed' },
+    { id: 3, name: 'Anonymous', amount: 10000, date: '2025-08-02', status: 'completed' },
+    { id: 4, name: 'Amit Patel', amount: 1000, date: '2025-08-01', status: 'pending' },
+  ];
+
+  const recentInquiries = [
+    { id: 1, name: 'Sunita Devi', subject: 'Volunteering', date: '2025-08-04', status: 'new' },
+    { id: 2, name: 'Rahul Meena', subject: 'Partnership', date: '2025-08-03', status: 'replied' },
+    { id: 3, name: 'NGO Connect', subject: 'Collaboration', date: '2025-08-02', status: 'new' },
+  ];
+
+  const renderContent = () => {
+    switch (activeTab) {
+      case 'overview':
+        return (
+          <div className="space-y-6">
+            {/* Stats Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {dashboardStats.map((stat, index) => (
+                <Card key={index} className="border-0 shadow-lg hover:shadow-xl transition-shadow">
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm text-stone-500 mb-1">{stat.label}</p>
+                        <p className="text-3xl font-bold text-stone-800">{stat.value}</p>
+                        <p className="text-sm text-sage-600 mt-1">{stat.change} this month</p>
+                      </div>
+                      <div className={`w-14 h-14 rounded-xl ${stat.color} flex items-center justify-center`}>
+                        <stat.icon className="text-white" size={24} />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+
+            {/* Recent Activity */}
+            <div className="grid lg:grid-cols-2 gap-6">
+              {/* Recent Donations */}
+              <Card className="border-0 shadow-lg">
+                <CardHeader className="flex flex-row items-center justify-between">
+                  <CardTitle className="text-lg font-heading">Recent Donations</CardTitle>
+                  <Button variant="ghost" size="sm" onClick={() => setActiveTab('donations')}>
+                    View All
+                  </Button>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {recentDonations.map((donation) => (
+                      <div key={donation.id} className="flex items-center justify-between p-3 bg-stone-50 rounded-lg">
+                        <div>
+                          <p className="font-medium text-stone-800">{donation.name}</p>
+                          <p className="text-sm text-stone-500">{donation.date}</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="font-bold text-terracotta-600">₹{donation.amount.toLocaleString()}</p>
+                          <span className={`text-xs px-2 py-1 rounded-full ${donation.status === 'completed' ? 'bg-sage-100 text-sage-700' : 'bg-ochre-100 text-ochre-700'}`}>
+                            {donation.status}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Recent Inquiries */}
+              <Card className="border-0 shadow-lg">
+                <CardHeader className="flex flex-row items-center justify-between">
+                  <CardTitle className="text-lg font-heading">Recent Inquiries</CardTitle>
+                  <Button variant="ghost" size="sm" onClick={() => setActiveTab('inquiries')}>
+                    View All
+                  </Button>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {recentInquiries.map((inquiry) => (
+                      <div key={inquiry.id} className="flex items-center justify-between p-3 bg-stone-50 rounded-lg">
+                        <div>
+                          <p className="font-medium text-stone-800">{inquiry.name}</p>
+                          <p className="text-sm text-stone-500">{inquiry.subject}</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-sm text-stone-500">{inquiry.date}</p>
+                          <span className={`text-xs px-2 py-1 rounded-full ${inquiry.status === 'new' ? 'bg-terracotta-100 text-terracotta-700' : 'bg-stone-100 text-stone-600'}`}>
+                            {inquiry.status}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Quick Actions */}
+            <Card className="border-0 shadow-lg">
+              <CardHeader>
+                <CardTitle className="text-lg font-heading">Quick Actions</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  {[
+                    { label: 'Add Program', icon: Plus, color: 'bg-terracotta-100 text-terracotta-600' },
+                    { label: 'New Blog Post', icon: FileText, color: 'bg-sage-100 text-sage-600' },
+                    { label: 'Upload Gallery', icon: Image, color: 'bg-ochre-100 text-ochre-600' },
+                    { label: 'Add Story', icon: Heart, color: 'bg-stone-100 text-stone-600' },
+                  ].map((action, index) => (
+                    <button
+                      key={index}
+                      className={`p-4 rounded-xl ${action.color} hover:opacity-80 transition-opacity flex flex-col items-center gap-2`}
+                    >
+                      <action.icon size={24} />
+                      <span className="text-sm font-medium">{action.label}</span>
+                    </button>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        );
+
+      case 'programs':
+        return (
+          <div className="space-y-6">
+            <div className="flex justify-between items-center">
+              <h2 className="text-2xl font-heading font-bold text-stone-800">Programs Management</h2>
+              <Button className="bg-terracotta-600 hover:bg-terracotta-700 text-white">
+                <Plus className="mr-2" size={18} />
+                Add Program
+              </Button>
+            </div>
+            <Card className="border-0 shadow-lg">
+              <CardContent className="p-0">
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead className="bg-stone-50 border-b border-stone-100">
+                      <tr>
+                        <th className="text-left p-4 font-medium text-stone-600">Program</th>
+                        <th className="text-left p-4 font-medium text-stone-600">Category</th>
+                        <th className="text-left p-4 font-medium text-stone-600">Beneficiaries</th>
+                        <th className="text-left p-4 font-medium text-stone-600">Status</th>
+                        <th className="text-left p-4 font-medium text-stone-600">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {programs.map((program) => (
+                        <tr key={program.id} className="border-b border-stone-50 hover:bg-stone-50">
+                          <td className="p-4">
+                            <div className="flex items-center gap-3">
+                              <img src={program.image} alt={program.title} className="w-12 h-12 rounded-lg object-cover" />
+                              <span className="font-medium text-stone-800">{program.title}</span>
+                            </div>
+                          </td>
+                          <td className="p-4">
+                            <span className="px-3 py-1 bg-terracotta-100 text-terracotta-700 rounded-full text-sm">
+                              {program.category}
+                            </span>
+                          </td>
+                          <td className="p-4 text-stone-600">{program.beneficiaries.toLocaleString()}</td>
+                          <td className="p-4">
+                            <span className="px-3 py-1 bg-sage-100 text-sage-700 rounded-full text-sm">Active</span>
+                          </td>
+                          <td className="p-4">
+                            <div className="flex gap-2">
+                              <Button variant="ghost" size="icon"><Eye size={16} /></Button>
+                              <Button variant="ghost" size="icon"><Edit size={16} /></Button>
+                              <Button variant="ghost" size="icon" className="text-red-500"><Trash2 size={16} /></Button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        );
+
+      case 'donations':
+        return (
+          <div className="space-y-6">
+            <div className="flex justify-between items-center">
+              <h2 className="text-2xl font-heading font-bold text-stone-800">Donations</h2>
+              <Button variant="outline">
+                <Filter className="mr-2" size={18} />
+                Filter
+              </Button>
+            </div>
+            <div className="grid md:grid-cols-3 gap-6">
+              <Card className="border-0 shadow-lg bg-gradient-to-br from-terracotta-500 to-terracotta-600 text-white">
+                <CardContent className="p-6">
+                  <p className="text-terracotta-100">Total Collected</p>
+                  <p className="text-4xl font-bold mt-2">₹12,50,000</p>
+                  <p className="text-terracotta-100 text-sm mt-2">This year</p>
+                </CardContent>
+              </Card>
+              <Card className="border-0 shadow-lg bg-gradient-to-br from-sage-500 to-sage-600 text-white">
+                <CardContent className="p-6">
+                  <p className="text-sage-100">Monthly Donors</p>
+                  <p className="text-4xl font-bold mt-2">45</p>
+                  <p className="text-sage-100 text-sm mt-2">Recurring</p>
+                </CardContent>
+              </Card>
+              <Card className="border-0 shadow-lg bg-gradient-to-br from-ochre-500 to-ochre-600 text-white">
+                <CardContent className="p-6">
+                  <p className="text-ochre-100">Average Donation</p>
+                  <p className="text-4xl font-bold mt-2">₹2,500</p>
+                  <p className="text-ochre-100 text-sm mt-2">Per donor</p>
+                </CardContent>
+              </Card>
+            </div>
+            <Card className="border-0 shadow-lg">
+              <CardHeader>
+                <CardTitle>All Donations</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-stone-500 text-center py-8">Donation records will appear here when integrated with payment gateway</p>
+              </CardContent>
+            </Card>
+          </div>
+        );
+
+      case 'volunteers':
+        return (
+          <div className="space-y-6">
+            <div className="flex justify-between items-center">
+              <h2 className="text-2xl font-heading font-bold text-stone-800">Volunteer Applications</h2>
+            </div>
+            <Card className="border-0 shadow-lg">
+              <CardContent className="p-6">
+                <p className="text-stone-500 text-center py-8">Volunteer applications will appear here</p>
+              </CardContent>
+            </Card>
+          </div>
+        );
+
+      case 'stories':
+        return (
+          <div className="space-y-6">
+            <div className="flex justify-between items-center">
+              <h2 className="text-2xl font-heading font-bold text-stone-800">Impact Stories</h2>
+              <Button className="bg-terracotta-600 hover:bg-terracotta-700 text-white">
+                <Plus className="mr-2" size={18} />
+                Add Story
+              </Button>
+            </div>
+            <div className="grid md:grid-cols-3 gap-6">
+              {successStories.map((story) => (
+                <Card key={story.id} className="border-0 shadow-lg overflow-hidden">
+                  <img src={story.image} alt={story.name} className="w-full h-40 object-cover" />
+                  <CardContent className="p-4">
+                    <h3 className="font-bold text-stone-800">{story.name}</h3>
+                    <p className="text-sm text-stone-500">{story.location}</p>
+                    <p className="text-sm text-stone-600 mt-2 line-clamp-2">{story.story}</p>
+                    <div className="flex gap-2 mt-4">
+                      <Button variant="outline" size="sm"><Edit size={14} className="mr-1" /> Edit</Button>
+                      <Button variant="outline" size="sm" className="text-red-500"><Trash2 size={14} /></Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+        );
+
+      case 'news':
+        return (
+          <div className="space-y-6">
+            <div className="flex justify-between items-center">
+              <h2 className="text-2xl font-heading font-bold text-stone-800">News & Blog</h2>
+              <Button className="bg-terracotta-600 hover:bg-terracotta-700 text-white">
+                <Plus className="mr-2" size={18} />
+                New Post
+              </Button>
+            </div>
+            <div className="grid gap-4">
+              {newsArticles.map((article) => (
+                <Card key={article.id} className="border-0 shadow-lg">
+                  <CardContent className="p-4 flex items-center gap-4">
+                    <img src={article.image} alt={article.title} className="w-20 h-20 rounded-lg object-cover" />
+                    <div className="flex-1">
+                      <h3 className="font-bold text-stone-800">{article.title}</h3>
+                      <p className="text-sm text-stone-500">{article.date} • {article.category}</p>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button variant="ghost" size="icon"><Eye size={16} /></Button>
+                      <Button variant="ghost" size="icon"><Edit size={16} /></Button>
+                      <Button variant="ghost" size="icon" className="text-red-500"><Trash2 size={16} /></Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+        );
+
+      case 'gallery':
+        return (
+          <div className="space-y-6">
+            <div className="flex justify-between items-center">
+              <h2 className="text-2xl font-heading font-bold text-stone-800">Gallery Management</h2>
+              <Button className="bg-terracotta-600 hover:bg-terracotta-700 text-white">
+                <Plus className="mr-2" size={18} />
+                Upload Images
+              </Button>
+            </div>
+            <Card className="border-0 shadow-lg">
+              <CardContent className="p-6">
+                <p className="text-stone-500 text-center py-8">Gallery images will be manageable here</p>
+              </CardContent>
+            </Card>
+          </div>
+        );
+
+      case 'inquiries':
+        return (
+          <div className="space-y-6">
+            <div className="flex justify-between items-center">
+              <h2 className="text-2xl font-heading font-bold text-stone-800">Contact Inquiries</h2>
+            </div>
+            <Card className="border-0 shadow-lg">
+              <CardContent className="p-6">
+                <p className="text-stone-500 text-center py-8">Contact form submissions will appear here</p>
+              </CardContent>
+            </Card>
+          </div>
+        );
+
+      case 'settings':
+        return (
+          <div className="space-y-6">
+            <h2 className="text-2xl font-heading font-bold text-stone-800">Settings</h2>
+            <Card className="border-0 shadow-lg">
+              <CardContent className="p-6">
+                <p className="text-stone-500 text-center py-8">Settings panel coming soon</p>
+              </CardContent>
+            </Card>
+          </div>
+        );
+
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-stone-100">
+      {/* Sidebar */}
+      <aside className={`fixed top-0 left-0 z-40 h-screen bg-white shadow-xl transition-transform duration-300 ${
+        sidebarOpen ? 'translate-x-0 w-64' : '-translate-x-full w-64 lg:translate-x-0 lg:w-20'
+      }`}>
+        {/* Logo */}
+        <div className="p-4 border-b border-stone-100">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-gradient-to-br from-terracotta-500 to-ochre-500 rounded-xl flex items-center justify-center">
+              <span className="text-white font-bold text-lg">R</span>
+            </div>
+            {sidebarOpen && (
+              <div>
+                <h2 className="font-heading font-bold text-stone-800">RIDS</h2>
+                <p className="text-xs text-stone-500">Admin Panel</p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Nav Items */}
+        <nav className="p-4 space-y-1">
+          {sidebarItems.map((item) => (
+            <button
+              key={item.id}
+              onClick={() => setActiveTab(item.id)}
+              className={`w-full flex items-center gap-3 px-3 py-3 rounded-lg transition-all ${
+                activeTab === item.id
+                  ? 'bg-terracotta-50 text-terracotta-600'
+                  : 'text-stone-600 hover:bg-stone-50'
+              }`}
+            >
+              <item.icon size={20} />
+              {sidebarOpen && <span className="font-medium">{item.label}</span>}
+            </button>
+          ))}
+        </nav>
+
+        {/* Logout */}
+        <div className="absolute bottom-4 left-4 right-4">
+          <button
+            onClick={handleLogout}
+            className="w-full flex items-center gap-3 px-3 py-3 rounded-lg text-red-500 hover:bg-red-50 transition-all"
+          >
+            <LogOut size={20} />
+            {sidebarOpen && <span className="font-medium">Logout</span>}
+          </button>
+        </div>
+      </aside>
+
+      {/* Main Content */}
+      <div className={`transition-all duration-300 ${sidebarOpen ? 'lg:ml-64' : 'lg:ml-20'}`}>
+        {/* Top Bar */}
+        <header className="bg-white shadow-sm sticky top-0 z-30">
+          <div className="flex items-center justify-between px-6 py-4">
+            <div className="flex items-center gap-4">
+              <button
+                onClick={() => setSidebarOpen(!sidebarOpen)}
+                className="p-2 rounded-lg hover:bg-stone-100"
+              >
+                <Menu size={20} />
+              </button>
+              <div>
+                <h1 className="font-heading font-bold text-stone-800 capitalize">{activeTab}</h1>
+                <p className="text-sm text-stone-500">Manage your NGO dashboard</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-4">
+              <button className="p-2 rounded-lg hover:bg-stone-100 relative">
+                <Bell size={20} />
+                <span className="absolute top-1 right-1 w-2 h-2 bg-terracotta-500 rounded-full" />
+              </button>
+              <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-stone-50">
+                <div className="w-8 h-8 rounded-full bg-terracotta-200 flex items-center justify-center">
+                  <span className="text-terracotta-600 font-medium text-sm">
+                    {user?.email?.charAt(0).toUpperCase() || 'A'}
+                  </span>
+                </div>
+                <span className="text-sm font-medium text-stone-700">{user?.email || 'Admin'}</span>
+              </div>
+            </div>
+          </div>
+        </header>
+
+        {/* Page Content */}
+        <main className="p-6">
+          {renderContent()}
+        </main>
+      </div>
+    </div>
+  );
+};
+
+export default AdminDashboard;
