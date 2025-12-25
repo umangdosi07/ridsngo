@@ -9,6 +9,7 @@ import { Label } from '../components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { volunteerOpportunities } from '../data/mock';
 import { toast } from 'sonner';
+import { volunteersAPI } from '../services/api';
 
 const GetInvolved = () => {
   const [volunteerForm, setVolunteerForm] = useState({
@@ -36,8 +37,8 @@ const GetInvolved = () => {
     e.preventDefault();
     setIsSubmitting(true);
     
-    // Mock submission - will be replaced with actual API call
-    setTimeout(() => {
+    try {
+      await volunteersAPI.create(volunteerForm);
       toast.success('Thank you for your interest! We will contact you soon.');
       setVolunteerForm({
         name: '',
@@ -49,8 +50,12 @@ const GetInvolved = () => {
         experience: '',
         message: ''
       });
+    } catch (error) {
+      console.error('Error submitting form:', error);
+      toast.error('Failed to submit. Please try again.');
+    } finally {
       setIsSubmitting(false);
-    }, 1500);
+    }
   };
 
   const partnershipTypes = [
