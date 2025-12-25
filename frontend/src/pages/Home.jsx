@@ -1,11 +1,37 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, Heart, Users, Calendar, MapPin, ChevronRight, Play } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Card, CardContent } from '../components/ui/card';
-import { ngoInfo, impactStats, focusAreas, programs, successStories, newsArticles } from '../data/mock';
+import { ngoInfo, impactStats, focusAreas } from '../data/mock';
+import { programsAPI, storiesAPI, newsAPI } from '../services/api';
 
 const Home = () => {
+  const [programs, setPrograms] = useState([]);
+  const [successStories, setSuccessStories] = useState([]);
+  const [newsArticles, setNewsArticles] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [programsData, storiesData, newsData] = await Promise.all([
+          programsAPI.getAll(),
+          storiesAPI.getAll(),
+          newsAPI.getAll()
+        ]);
+        setPrograms(programsData);
+        setSuccessStories(storiesData);
+        setNewsArticles(newsData);
+      } catch (error) {
+        console.error('Error fetching data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
+
   return (
     <div className="overflow-hidden">
       {/* Hero Section */}
