@@ -5,74 +5,69 @@ from motor.motor_asyncio import AsyncIOMotorClient
 import os
 import logging
 from pathlib import Path
-from pydantic import BaseModel, Field, ConfigDict
-from typing import List
-import uuid
-from datetime import datetime, timezone
 
-
+# Load environment variables
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
 
 # MongoDB connection
-mongo_url = os.environ['MONGO_URL']
+mongo_url = os.environ.get('MONGO_URL')
 client = AsyncIOMotorClient(mongo_url)
-db = client[os.environ['DB_NAME']]
+db = client[os.environ.get('DB_NAME', 'rids_ngo')]
 
-# Create the main app without a prefix
-app = FastAPI()
+# Create the main app
+app = FastAPI(
+    title="RIDS NGO API",
+    description="API for Rajasthan Integrated Development Society NGO Website",
+    version="1.0.0"
+)
 
 # Create a router with the /api prefix
 api_router = APIRouter(prefix="/api")
 
+# Import routers
+from routers.auth import router as auth_router
+from routers.programs import router as programs_router
+from routers.news import router as news_router
+from routers.stories import router as stories_router
+from routers.gallery import router as gallery_router
+from routers.donations import router as donations_router
+from routers.inquiries import router as inquiries_router
+from routers.volunteers import router as volunteers_router
+from routers.newsletter import router as newsletter_router
+from routers.dashboard import router as dashboard_router
+from routers.seed import router as seed_router
 
-# Define Models
-class StatusCheck(BaseModel):
-    model_config = ConfigDict(extra="ignore")  # Ignore MongoDB's _id field
-    
-    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    client_name: str
-    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
-
-class StatusCheckCreate(BaseModel):
-    client_name: str
-
-# Add your routes to the router instead of directly to app
+# Health check endpoint
 @api_router.get("/")
 async def root():
-    return {"message": "Hello World"}
+    return {"message": "RIDS NGO API is running", "status": "healthy"}
 
-@api_router.post("/status", response_model=StatusCheck)
-async def create_status_check(input: StatusCheckCreate):
-    status_dict = input.model_dump()
-    status_obj = StatusCheck(**status_dict)
-    
-    # Convert to dict and serialize datetime to ISO string for MongoDB
-    doc = status_obj.model_dump()
-    doc['timestamp'] = doc['timestamp'].isoformat()
-    
-    _ = await db.status_checks.insert_one(doc)
-    return status_obj
+@api_router.get("/health")
+async def health_check():
+    return {"status": "healthy", "database": "connected"}
 
-@api_router.get("/status", response_model=List[StatusCheck])
-async def get_status_checks():
-    # Exclude MongoDB's _id field from the query results
-    status_checks = await db.status_checks.find({}, {"_id": 0}).to_list(1000)
-    
-    # Convert ISO string timestamps back to datetime objects
-    for check in status_checks:
-        if isinstance(check['timestamp'], str):
-            check['timestamp'] = datetime.fromisoformat(check['timestamp'])
-    
-    return status_checks
+# Include all routers
+api_router.include_router(auth_router)
+api_router.include_router(programs_router)
+api_router.include_router(news_router)
+api_router.include_router(stories_router)
+api_router.include_router(gallery_router)
+api_router.include_router(donations_router)
+api_router.include_router(inquiries_router)
+api_router.include_router(volunteers_router)
+api_router.include_router(newsletter_router)
+api_router.include_router(dashboard_router)
+api_router.include_router(seed_router)
 
 # Include the router in the main app
 app.include_router(api_router)
 
+# CORS middleware
 app.add_middleware(
     CORSMiddleware,
     allow_credentials=True,
-    allow_origins=os.environ.get('CORS_ORIGINS', '*').split(','),
+    allow_origins=["*"],
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -84,6 +79,12 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+@app.on_event("startup")
+async def startup_db_client():
+    logger.info("RIDS NGO API started successfully")
+    logger.info(f"Database: {os.environ.get('DB_NAME', 'rids_ngo')}")
+
 @app.on_event("shutdown")
 async def shutdown_db_client():
     client.close()
+    logger.info("Database connection closed")
