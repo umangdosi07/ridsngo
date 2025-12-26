@@ -1,11 +1,39 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { MapPin, Phone, Mail, Facebook, Twitter, Instagram, Youtube, Heart, ArrowRight } from 'lucide-react';
 import { ngoInfo } from '../../data/mock';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
+import { toast } from 'sonner';
+import { newsletterAPI } from '../../services/api';
 
 const Footer = () => {
+  const [email, setEmail] = useState('');
+  const [isSubscribing, setIsSubscribing] = useState(false);
+
+  const handleSubscribe = async (e) => {
+    e.preventDefault();
+    if (!email) {
+      toast.error('Please enter your email');
+      return;
+    }
+    
+    setIsSubscribing(true);
+    try {
+      await newsletterAPI.subscribe(email);
+      toast.success('Thank you for subscribing!');
+      setEmail('');
+    } catch (error) {
+      if (error.response?.data?.detail === 'Email already subscribed') {
+        toast.info('You are already subscribed!');
+      } else {
+        toast.error('Failed to subscribe. Please try again.');
+      }
+    } finally {
+      setIsSubscribing(false);
+    }
+  };
+
   const quickLinks = [
     { path: '/about', label: 'About Us' },
     { path: '/programs', label: 'Our Programs' },
@@ -34,17 +62,19 @@ const Footer = () => {
               <h3 className="text-2xl font-heading font-bold text-white">Stay Connected</h3>
               <p className="text-terracotta-100 mt-1">Subscribe to receive updates on our work and impact</p>
             </div>
-            <div className="flex w-full md:w-auto gap-2">
+            <form onSubmit={handleSubscribe} className="flex w-full md:w-auto gap-2">
               <Input
                 type="email"
                 placeholder="Enter your email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 className="bg-white/10 border-white/20 text-white placeholder:text-white/60 min-w-[280px]"
               />
-              <Button className="bg-white text-terracotta-700 hover:bg-white/90">
-                Subscribe
-                <ArrowRight size={16} className="ml-2" />
+              <Button type="submit" className="bg-white text-terracotta-700 hover:bg-white/90" disabled={isSubscribing}>
+                {isSubscribing ? 'Subscribing...' : 'Subscribe'}
+                {!isSubscribing && <ArrowRight size={16} className="ml-2" />}
               </Button>
-            </div>
+            </form>
           </div>
         </div>
       </div>
