@@ -116,6 +116,9 @@ backend:
       - working: true
         agent: "main"
         comment: "JWT-based auth implemented and tested via curl. Login returns valid token."
+      - working: true
+        agent: "testing"
+        comment: "✅ VERIFIED: Auth API working perfectly. Login with admin@rids.org/admin123 successful, returns valid JWT token. Admin setup already completed. Token authentication working for protected endpoints."
 
   - task: "Programs CRUD API"
     implemented: true
