@@ -37,6 +37,7 @@ from routers.volunteers import router as volunteers_router
 from routers.newsletter import router as newsletter_router
 from routers.dashboard import router as dashboard_router
 from routers.seed import router as seed_router
+from routers.users import router as users_router
 
 # Health check endpoint
 @api_router.get("/")
