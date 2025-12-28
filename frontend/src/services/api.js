@@ -290,4 +290,28 @@ export const dashboardAPI = {
   },
 };
 
+// ============ Users API ============
+export const usersAPI = {
+  getAll: async () => {
+    const response = await apiClient.get('/users');
+    return response.data;
+  },
+  
+  create: async (userData) => {
+    const response = await apiClient.post('/users', userData);
+    return response.data;
+  },
+  
+  update: async (id, data) => {
+    const params = new URLSearchParams(data);
+    const response = await apiClient.put(`/users/${id}?${params}`);
+    return response.data;
+  },
+  
+  delete: async (id) => {
+    const response = await apiClient.delete(`/users/${id}`);
+    return response.data;
+  },
+};
+
 export default apiClient;
