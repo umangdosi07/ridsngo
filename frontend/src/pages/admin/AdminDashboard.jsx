@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import {
-  LayoutDashboard, FileText, Image, Users, Heart, Mail, Calendar, Settings, LogOut, Menu, X, Bell, ChevronDown, Plus, Eye, Edit, Trash2, Search, Filter, MoreVertical, TrendingUp, DollarSign, UserPlus, Activity
+  LayoutDashboard, FileText, Image, Users, Heart, Mail, Calendar, Settings, LogOut, Menu, X, Bell, ChevronDown, Plus, Eye, Edit, Trash2, Search, Filter, MoreVertical, TrendingUp, DollarSign, UserPlus, Activity, UserCog, Shield
 } from 'lucide-react';
 import { Button } from '../../components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
 import { Input } from '../../components/ui/input';
+import { Label } from '../../components/ui/label';
 import { ngoInfo, impactStats, programs, newsArticles, donationTiers, successStories, volunteerOpportunities } from '../../data/mock';
 import { toast } from 'sonner';
+import { usersAPI, dashboardAPI, programsAPI, storiesAPI, inquiriesAPI, volunteersAPI, donationsAPI } from '../../services/api';
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -15,6 +17,19 @@ const AdminDashboard = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [activeTab, setActiveTab] = useState('overview');
   const [user, setUser] = useState(null);
+  
+  // Data states
+  const [adminUsers, setAdminUsers] = useState([]);
+  const [loadingUsers, setLoadingUsers] = useState(false);
+  const [showCreateUserModal, setShowCreateUserModal] = useState(false);
+  const [newUser, setNewUser] = useState({ name: '', email: '', password: '' });
+  const [creatingUser, setCreatingUser] = useState(false);
+  
+  // Dashboard data
+  const [dashboardData, setDashboardData] = useState(null);
+  const [recentActivity, setRecentActivity] = useState(null);
+  const [programsData, setPrograms] = useState([]);
+  const [storiesData, setStories] = useState([]);
 
   useEffect(() => {
     const token = localStorage.getItem('admin_token');
@@ -28,7 +43,81 @@ const AdminDashboard = () => {
     if (userData) {
       setUser(JSON.parse(userData));
     }
+    
+    // Fetch dashboard data
+    fetchDashboardData();
   }, [navigate]);
+  
+  const fetchDashboardData = async () => {
+    try {
+      const [stats, recent, progs, stories] = await Promise.all([
+        dashboardAPI.getStats(),
+        dashboardAPI.getRecentActivity(),
+        programsAPI.getAll(),
+        storiesAPI.getAll()
+      ]);
+      setDashboardData(stats);
+      setRecentActivity(recent);
+      setPrograms(progs);
+      setStories(stories);
+    } catch (error) {
+      console.error('Error fetching dashboard data:', error);
+    }
+  };
+  
+  const fetchUsers = async () => {
+    setLoadingUsers(true);
+    try {
+      const users = await usersAPI.getAll();
+      setAdminUsers(users);
+    } catch (error) {
+      console.error('Error fetching users:', error);
+      toast.error('Failed to load users');
+    } finally {
+      setLoadingUsers(false);
+    }
+  };
+  
+  useEffect(() => {
+    if (activeTab === 'users') {
+      fetchUsers();
+    }
+  }, [activeTab]);
+  
+  const handleCreateUser = async (e) => {
+    e.preventDefault();
+    if (!newUser.name || !newUser.email || !newUser.password) {
+      toast.error('Please fill all fields');
+      return;
+    }
+    
+    setCreatingUser(true);
+    try {
+      await usersAPI.create(newUser);
+      toast.success('User created successfully!');
+      setShowCreateUserModal(false);
+      setNewUser({ name: '', email: '', password: '' });
+      fetchUsers();
+    } catch (error) {
+      console.error('Error creating user:', error);
+      toast.error(error.response?.data?.detail || 'Failed to create user');
+    } finally {
+      setCreatingUser(false);
+    }
+  };
+  
+  const handleDeleteUser = async (userId, userEmail) => {
+    if (!confirm(`Are you sure you want to delete ${userEmail}?`)) return;
+    
+    try {
+      await usersAPI.delete(userId);
+      toast.success('User deleted successfully');
+      fetchUsers();
+    } catch (error) {
+      console.error('Error deleting user:', error);
+      toast.error(error.response?.data?.detail || 'Failed to delete user');
+    }
+  };
 
   const handleLogout = () => {
     localStorage.removeItem('admin_token');
@@ -46,18 +135,19 @@ const AdminDashboard = () => {
     { id: 'news', label: 'News & Blog', icon: Calendar },
     { id: 'gallery', label: 'Gallery', icon: Image },
     { id: 'inquiries', label: 'Inquiries', icon: Mail },
+    { id: 'users', label: 'User Management', icon: UserCog },
     { id: 'settings', label: 'Settings', icon: Settings },
   ];
 
   // Mock data for dashboard
   const dashboardStats = [
-    { label: 'Total Donations', value: '₹12.5L', change: '+12%', icon: DollarSign, color: 'bg-terracotta-500' },
-    { label: 'Active Volunteers', value: '156', change: '+8%', icon: Users, color: 'bg-sage-500' },
-    { label: 'New Inquiries', value: '24', change: '+15%', icon: Mail, color: 'bg-ochre-500' },
-    { label: 'Programs Running', value: '12', change: '+2', icon: Activity, color: 'bg-stone-600' },
+    { label: 'Total Donations', value: dashboardData?.donations?.total_amount ? `₹${(dashboardData.donations.total_amount / 100000).toFixed(1)}L` : '₹0', change: `${dashboardData?.donations?.total_count || 0} total`, icon: DollarSign, color: 'bg-terracotta-500' },
+    { label: 'Volunteers', value: dashboardData?.volunteers?.total || '0', change: `${dashboardData?.volunteers?.new || 0} new`, icon: Users, color: 'bg-sage-500' },
+    { label: 'Inquiries', value: dashboardData?.inquiries?.total || '0', change: `${dashboardData?.inquiries?.new || 0} new`, icon: Mail, color: 'bg-ochre-500' },
+    { label: 'Programs', value: dashboardData?.programs?.total || '0', change: `${dashboardData?.programs?.active || 0} active`, icon: Activity, color: 'bg-stone-600' },
   ];
 
-  const recentDonations = [
+  const recentDonations = recentActivity?.donations || [];
     { id: 1, name: 'Rajesh Kumar', amount: 5000, date: '2025-08-04', status: 'completed' },
     { id: 2, name: 'Priya Sharma', amount: 2500, date: '2025-08-03', status: 'completed' },
     { id: 3, name: 'Anonymous', amount: 10000, date: '2025-08-02', status: 'completed' },
