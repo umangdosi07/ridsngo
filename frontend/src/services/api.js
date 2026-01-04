@@ -188,6 +188,12 @@ export const donationsAPI = {
     return response.data;
   },
   
+  verifyPayment: async (verifyData) => {
+    const params = new URLSearchParams(verifyData);
+    const response = await apiClient.post(`/donations/verify-payment?${params}`);
+    return response.data;
+  },
+  
   updateStatus: async (id, status, paymentId = null) => {
     const params = new URLSearchParams({ status });
     if (paymentId) params.append('payment_id', paymentId);
